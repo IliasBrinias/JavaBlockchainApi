@@ -1,5 +1,6 @@
 package com.unipi.msc.javablockchainapi.Model;
 
+import com.google.gson.GsonBuilder;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -20,10 +21,10 @@ public class Product implements Serializable {
     @Override
     public String toString() {
         return "Product{" +
-                "id='" + id + '\'' +
+                "id=" + id +
                 ", name='" + name + '\'' +
                 ", dsc='" + dsc + '\'' +
-                ", productCategory=" + productCategory +
+                ", productCategory='" + productCategory + '\'' +
                 '}';
     }
 }

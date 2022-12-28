@@ -1,31 +1,31 @@
 package com.unipi.msc.javablockchainapi.Model;
 
-import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
 public class Block {
+    public static String GENESIS_HASH = "0";
     private String hash;
-    private String previousHash;
-    private String data;
-    private long timeStamp;
+    private final String previousHash;
+    private ProductPrice data;
+    private final long timeStamp;
     private int nonce;
 
-    public Block(String previousHash, String data, long timeStamp) {
+    public Block(String previousHash, ProductPrice data, long timeStamp) {
         this.previousHash = previousHash;
         this.data = data;
         this.timeStamp = timeStamp;
         this.hash = calculateBlockHash();
     }
     public String calculateBlockHash(){
-        String dataToHash = previousHash + Long.toString(timeStamp)
-                +data+Integer.toString(nonce);
-        MessageDigest digest = null;
-        byte[] bytes = null;
+        String dataToHash = previousHash + timeStamp + data.toString() + nonce;
+        MessageDigest digest;
+        byte[] bytes;
         try {
             digest = MessageDigest.getInstance("SHA-256");
-            bytes = digest.digest(dataToHash.getBytes("UTF-8"));
-        } catch (NoSuchAlgorithmException | UnsupportedEncodingException e) {
+            bytes = digest.digest(dataToHash.getBytes(StandardCharsets.UTF_8));
+        } catch (NoSuchAlgorithmException e) {
             throw new RuntimeException(e);
         }
         StringBuilder builder = new StringBuilder();
@@ -35,14 +35,12 @@ public class Block {
         return builder.toString();
     }
 
-    public String mineBlock(int prefix){
-        String prefixString =
-                new String(new char[prefix]).replace('\0','0');
+    public void mineBlock(int prefix){
+        String prefixString = new String(new char[prefix]).replace('\0','0');
         while (!hash.substring(0,prefix).equals(prefixString)){
             nonce++;
             hash = calculateBlockHash();
         }
-        return hash;
     }
 
     public String getHash() {
@@ -53,7 +51,7 @@ public class Block {
         return previousHash;
     }
 
-    public void setData(String data) {
+    public void setData(ProductPrice data) {
         this.data = data;
     }
 }
