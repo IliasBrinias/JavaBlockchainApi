@@ -1,5 +1,7 @@
 package com.unipi.msc.javablockchainapi.Model;
 
+import com.unipi.msc.javablockchainapi.Controllers.Request.AddBlockRequest;
+import com.unipi.msc.javablockchainapi.Controllers.Request.AddProductRequest;
 import org.sqlite.SQLiteConfig;
 
 import java.math.BigDecimal;
@@ -11,11 +13,8 @@ import java.util.List;
 import java.util.Random;
 
 public class DatabaseConfig {
-
     private static final String DATABASE_URL = "jdbc:sqlite:"+System.getProperty("user.dir")+"/database.sqlite";
     public static final String DRIVER = "org.sqlite.JDBC";
-
-    private static Random r;
     private static Connection getConnection() throws ClassNotFoundException {
         Class.forName(DRIVER);
         Connection connection = null;
@@ -23,7 +22,7 @@ public class DatabaseConfig {
             SQLiteConfig config = new SQLiteConfig();
             config.enforceForeignKeys(true);
             connection = DriverManager.getConnection(DATABASE_URL,config.toProperties());
-        } catch (SQLException ex) {}
+        } catch (SQLException ignore) {}
         return connection;
     }
     public static void createDB(){
@@ -35,7 +34,7 @@ public class DatabaseConfig {
         add_prices();
     }
 
-    private static List<Product> getProducts() {
+    public static List<Product> getProducts() {
         List<Product> productList = new ArrayList<>();
         String query = "SELECT * FROM product";
         try {
@@ -49,7 +48,7 @@ public class DatabaseConfig {
                         rs.getString(4)));
             }
         } catch (SQLException | ClassNotFoundException e) {
-            throw new RuntimeException(e);
+            e.printStackTrace();
         }
         return productList;
     }
@@ -63,14 +62,14 @@ public class DatabaseConfig {
             while(rs.next()){
                 productPriceList.add(new ProductPrice(
                         rs.getInt("product_price_id"),
-                        new Product(rs.getInt("product_id"),rs.getString("name"),rs.getString("description"),rs.getString("category")),
+                        new Product(rs.getInt("id"),rs.getString("name"),rs.getString("description"),rs.getString("category")),
                         rs.getDouble("price"),
                         rs.getLong("date")
                         )
                 );
             }
         } catch (SQLException | ClassNotFoundException e) {
-            throw new RuntimeException(e);
+            e.printStackTrace();
         }
         return productPriceList;
     }
@@ -82,7 +81,7 @@ public class DatabaseConfig {
                 DatabaseMetaData meta = conn.getMetaData();
             }
         } catch (SQLException | ClassNotFoundException e) {
-            System.out.println(e.getMessage());
+            e.printStackTrace();
         }
     }
     private static void createTables(){
@@ -134,7 +133,7 @@ public class DatabaseConfig {
         }
     }
     private static void add_prices(){
-        r = new Random();
+        Random r = new Random();
         List<Product> productList = getProducts();
 
         String product_price_value = """
@@ -146,7 +145,7 @@ public class DatabaseConfig {
             for (Product p : productList) {
                 for (int i=0;i<4;i++){
                     statement.setInt(1, p.getId());
-                    statement.setDouble(2, new Date().getTime()+ (long) i *r.nextInt(0,20));
+                    statement.setDouble(2, new Date().getTime()+ (long) i * r.nextInt(0,20));
                     if (p.getProductCategory().equals(ProductCategory.SmartPhones.toString())){
                         statement.setDouble(3, BigDecimal.valueOf(r.nextDouble(200,250))
                                  .setScale(2, RoundingMode.HALF_UP)
@@ -179,6 +178,7 @@ public class DatabaseConfig {
             statement.setDouble(2, timestamp);
             statement.setDouble(3, price);
             statement.execute();
+            conn.close();
         }catch (SQLException e){
             return e.getErrorCode();
         }catch (ClassNotFoundException e){
@@ -200,11 +200,12 @@ public class DatabaseConfig {
             while(rs.next()){
                 productPrice = new ProductPrice(
                         rs.getInt("product_price_id"),
-                        new Product(rs.getInt("product_id"),rs.getString("name"),rs.getString("description"),rs.getString("category")),
+                        new Product(rs.getInt("id"),rs.getString("name"),rs.getString("description"),rs.getString("category")),
                         rs.getDouble("price"),
                         rs.getLong("date")
                     );
             }
+            conn.close();
         } catch (SQLException | ClassNotFoundException e) {
             throw new RuntimeException(e);
         }
@@ -256,16 +257,77 @@ public class DatabaseConfig {
             while(rs.next()){
                 productPriceList.add(new ProductPrice(
                         rs.getInt("product_price_id"),
-                        new Product(rs.getInt("product_id"),rs.getString("name"),rs.getString("description"),rs.getString("category")),
+                        new Product(rs.getInt("id"),rs.getString("name"),rs.getString("description"),rs.getString("category")),
                         rs.getDouble("price"),
                         rs.getLong("date")
                     )
                 );
             }
+            conn.close();
         } catch (SQLException | ClassNotFoundException e) {
             throw new RuntimeException(e);
         }
-        return productPriceList;
 
+        return productPriceList;
+    }
+
+    public static void addProducts(List<AddProductRequest> requestList) {
+        String product_price_value = """
+                    INSERT INTO product(name, description, category) VALUES (?,?,?)
+                """;
+        try{
+            Connection conn = getConnection();
+            PreparedStatement statement = conn.prepareStatement(product_price_value);
+            for (AddProductRequest request : requestList) {
+                statement.setString(1, request.getName());
+                statement.setString(2, request.getDsc());
+                statement.setString(3, request.getProductCategory());
+                statement.addBatch();
+            }
+            statement.executeBatch();
+            conn.commit();
+            conn.close();
+        } catch (SQLException | ClassNotFoundException e) {
+           e.printStackTrace();
+        }
+    }
+
+    public static void addProduct(AddProductRequest request) {
+        String product_price_value = """
+                    INSERT INTO product(name, description, category) VALUES (?,?,?)
+                """;
+        try{
+            Connection conn = getConnection();
+            PreparedStatement statement = conn.prepareStatement(product_price_value);
+            statement.setString(1, request.getName());
+            statement.setString(2, request.getDsc());
+            statement.setString(3, request.getProductCategory());
+            statement.execute();
+            conn.close();
+        } catch (SQLException | ClassNotFoundException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static Product getProduct(int id) {
+        Product product = null;
+        String query = "SELECT * FROM product WHERE id = (?);";
+        try {
+            Connection conn = getConnection();
+            PreparedStatement statement = conn.prepareStatement(query);
+            statement.setInt(1,id);
+            ResultSet rs = statement.executeQuery();
+            while(rs.next()){
+                product = new Product(rs.getInt("id"),
+                        rs.getString("name"),
+                        rs.getString("description"),
+                        rs.getString("category")
+                );
+            }
+            conn.close();
+        } catch (SQLException | ClassNotFoundException e) {
+            throw new RuntimeException(e);
+        }
+        return product;
     }
 }

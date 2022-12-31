@@ -1,14 +1,17 @@
 package com.unipi.msc.javablockchainapi.Model;
 
+import lombok.Getter;
+import lombok.Setter;
+
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-
+@Getter
 public class Block {
     public static String GENESIS_HASH = "0";
     private String hash;
     private final String previousHash;
-    private ProductPrice data;
+    @Setter private ProductPrice data;
     private final long timeStamp;
     private int nonce;
 
@@ -41,17 +44,5 @@ public class Block {
             nonce++;
             hash = calculateBlockHash();
         }
-    }
-
-    public String getHash() {
-        return hash;
-    }
-
-    public String getPreviousHash() {
-        return previousHash;
-    }
-
-    public void setData(ProductPrice data) {
-        this.data = data;
     }
 }
