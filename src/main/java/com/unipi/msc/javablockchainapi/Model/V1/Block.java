@@ -1,5 +1,6 @@
-package com.unipi.msc.javablockchainapi.Model;
+package com.unipi.msc.javablockchainapi.Model.V1;
 
+import com.unipi.msc.javablockchainapi.Model.ProductPrice;
 import lombok.Getter;
 import lombok.Setter;
 

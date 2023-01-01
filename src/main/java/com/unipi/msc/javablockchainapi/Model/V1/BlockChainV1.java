@@ -1,23 +1,19 @@
-package com.unipi.msc.javablockchainapi.Controllers.BlockChainV1;
+package com.unipi.msc.javablockchainapi.Model.V1;
 
+import com.google.gson.GsonBuilder;
 import com.unipi.msc.javablockchainapi.Constants.ResultMessages;
 import com.unipi.msc.javablockchainapi.Controllers.Request.AddBlockRequest;
-import com.unipi.msc.javablockchainapi.Model.Block;
+import com.unipi.msc.javablockchainapi.Model.V1.Block;
 import com.unipi.msc.javablockchainapi.Model.DatabaseConfig;
 import com.unipi.msc.javablockchainapi.Model.Product;
 import com.unipi.msc.javablockchainapi.Model.ProductPrice;
-import lombok.SneakyThrows;
+import org.json.JSONArray;
+import org.json.JSONObject;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.Date;
-import java.util.List;
-import java.util.function.Function;
-import java.util.function.Predicate;
+import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 @Component
 @Scope("singleton")
@@ -100,12 +96,7 @@ public class BlockChainV1 {
             } else {
                 productPriceList = DatabaseConfig.getLastData(requestList.size());
                 for (ProductPrice productPrice : productPriceList) {
-                    Block block = new Block(blockChain.get(blockChain.size() - 1).getHash(),
-                            productPrice,
-                            new Date().getTime());
-                    block.mineBlock(prefix);
-                    blockChain.add(block);
-                    isChainValid();
+                    addBlockToChain(productPrice);
                 }
             }
         } catch (Exception e) {
@@ -130,15 +121,8 @@ public class BlockChainV1 {
     }
 
     public List<ProductPrice> getProduct(int id) {
-        if (blockChain.isEmpty()) {
-            try {
-                buildBlockChain();
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
-        }
         List<ProductPrice> productPriceList = new ArrayList<>();
-        blockChain.stream()
+        getBlockChain().stream()
                 .filter(block -> block.getData().getProduct().getId() == id)
                 .forEach(block -> productPriceList.add(block.getData()));
         if (productPriceList.isEmpty()) return null;
@@ -146,5 +130,23 @@ public class BlockChainV1 {
         return productPriceList.stream()
                 .sorted((p1,p2)->Long.compare(p2.getTimestamp(), p1.getTimestamp()))
                 .collect(Collectors.toList());
+    }
+
+    public String countPriceChange(List<Product> productList) {
+        Map<Integer,Integer> product_price_change = new HashMap<>();
+//        count the product price change
+        for (Block b:getBlockChain()){
+            product_price_change.merge(b.getData().getProduct().getId(), 1, Integer::sum);
+        }
+
+        JSONArray jsonArray = new JSONArray(new GsonBuilder().setPrettyPrinting().create().toJson(productList));
+        for (int i=0;i<jsonArray.length();i++) {
+            JSONObject productJSON = jsonArray.getJSONObject(i);
+            Integer product_price_count = product_price_change.get(productJSON.get("id"));
+            if (product_price_count == null) product_price_count = 0;
+            productJSON.put("product_price_change", product_price_count);
+        }
+
+        return jsonArray.toString();
     }
 }

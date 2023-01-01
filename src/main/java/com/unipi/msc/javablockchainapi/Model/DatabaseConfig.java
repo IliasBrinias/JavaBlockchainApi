@@ -330,4 +330,35 @@ public class DatabaseConfig {
         }
         return product;
     }
+
+    public static List<Product> searchProducts(String category, String name) {
+        List<Product> productList = new ArrayList<>();
+        String query = """
+                    SELECT *
+                    FROM product
+                    WHERE category LIKE '%'||(?)||'%' AND
+                          name     LIKE '%'||(?)||'%'
+                    ORDER BY id;
+                    """;
+        try {
+            Connection conn = getConnection();
+            PreparedStatement statement = conn.prepareStatement(query);
+            statement.setString(1,category);
+            statement.setString(2,name);
+            ResultSet rs = statement.executeQuery();
+            while(rs.next()){
+                productList.add(new Product(
+                        rs.getInt("id"),
+                        rs.getString("name"),
+                        rs.getString("description"),
+                        rs.getString("category")
+                    )
+                );
+            }
+            conn.close();
+        } catch (SQLException | ClassNotFoundException e) {
+            throw new RuntimeException(e);
+        }
+        return productList;
+    }
 }

@@ -1,14 +1,12 @@
 package com.unipi.msc.javablockchainapi.Controllers.Product;
 
 import com.google.gson.GsonBuilder;
-import com.unipi.msc.javablockchainapi.Controllers.BlockChainV1.BlockChainV1;
-import com.unipi.msc.javablockchainapi.Controllers.Request.AddBlockRequest;
+import com.unipi.msc.javablockchainapi.Model.V1.BlockChainV1;
 import com.unipi.msc.javablockchainapi.Controllers.Request.AddProductRequest;
 import com.unipi.msc.javablockchainapi.Controllers.Response.ErrorResponse;
 import com.unipi.msc.javablockchainapi.Model.DatabaseConfig;
 import com.unipi.msc.javablockchainapi.Model.Product;
 import com.unipi.msc.javablockchainapi.Model.ProductPrice;
-import jakarta.el.BeanNameResolver;
 import lombok.AllArgsConstructor;
 import org.springframework.context.ApplicationContext;
 import org.springframework.http.ResponseEntity;
@@ -55,9 +53,20 @@ public class ProductController {
         return ResponseEntity.ok(new GsonBuilder().setPrettyPrinting().create().toJson(productPriceList));
     }
     @GetMapping("/search")
-    public ResponseEntity<?> searchProduct(@RequestParam String category,@RequestParam String name) {
-//        BlockChainV1 blockChainV1 = applicationContext.getBean(BlockChainV1.class);
-//        List<ProductPrice> productPriceList = blockChainV1.getProduct(id);
-        return ResponseEntity.noContent().build();
+    public ResponseEntity<?> searchProduct(@RequestParam String category,
+                                           @RequestParam String name) {
+
+        BlockChainV1 blockChainV1 = applicationContext.getBean(BlockChainV1.class);
+        List<Product> productList = DatabaseConfig.searchProducts(category, name);
+        if (productList.isEmpty()) {
+            return ResponseEntity.ok(new GsonBuilder()
+                    .setPrettyPrinting()
+                    .create()
+                    .toJson(new ErrorResponse(true,"No Products Found"))
+            );
+        }
+
+        return ResponseEntity.ok(blockChainV1.countPriceChange(productList));
     }
+
 }
