@@ -1,6 +1,7 @@
 package com.unipi.msc.javablockchainapi.Controllers.BlockChain;
 
 import com.google.gson.GsonBuilder;
+import com.unipi.msc.javablockchainapi.Model.V2.BlockChainV2;
 import com.unipi.msc.javablockchainapi.Model.V3.BlockChainV3;
 import com.unipi.msc.javablockchainapi.Controllers.Request.AddBlockRequest;
 import com.unipi.msc.javablockchainapi.Controllers.Response.ErrorResponse;
@@ -25,6 +26,10 @@ public class BlockChainController {
                 return ResponseEntity.ok(new GsonBuilder().setPrettyPrinting().create().toJson(blockChainV1.getBlockChain()));
             }
             case 2 -> {
+                BlockChainV2 blockChainV2 = applicationContext.getBean(BlockChainV2.class);
+                return ResponseEntity.ok(new GsonBuilder().setPrettyPrinting().create().toJson(blockChainV2.getBlockChain()));
+            }
+            case 3 -> {
                 BlockChainV3 blockChainV3 = applicationContext.getBean(BlockChainV3.class);
                 return ResponseEntity.ok(new GsonBuilder().setPrettyPrinting().create().toJson(blockChainV3.getBlockChain()));
             }
@@ -43,6 +48,14 @@ public class BlockChainController {
                 return ResponseEntity.badRequest().body(new GsonBuilder().setPrettyPrinting().create().toJson(new ErrorResponse(false,error_msg)));
             }
             case 2 -> {
+                BlockChainV2 blockChainV2 = applicationContext.getBean(BlockChainV2.class);
+                String error_msg = blockChainV2.addBlock(request.getProductId(),request.getPrice(),request.getTimestamp());
+                if (error_msg.equals("")){
+                    return ResponseEntity.ok("");
+                }
+                return ResponseEntity.badRequest().body(new GsonBuilder().setPrettyPrinting().create().toJson(new ErrorResponse(false,error_msg)));
+            }
+            case 3 -> {
                 BlockChainV3 blockChainV3 = applicationContext.getBean(BlockChainV3.class);
                 String error_msg = blockChainV3.addBlock(request.getProductId(),request.getPrice(),request.getTimestamp());
                 if (error_msg.equals("")){
@@ -52,7 +65,6 @@ public class BlockChainController {
             }
         }
         return ResponseEntity.badRequest().body(new GsonBuilder().setPrettyPrinting().create().toJson(new ErrorResponse(false,"Wrong Version")));
-
     }
     @PostMapping("{version}/multiple")
     public ResponseEntity<String> addAllBlock(@PathVariable Integer version, @RequestBody List<AddBlockRequest> requestList){
@@ -66,6 +78,14 @@ public class BlockChainController {
                 return ResponseEntity.badRequest().body(new GsonBuilder().setPrettyPrinting().create().toJson(new ErrorResponse(false,error_msg)));
             }
             case 2 -> {
+                BlockChainV2 blockChainV2 = applicationContext.getBean(BlockChainV2.class);
+                String error_msg = blockChainV2.addBlocks(requestList);
+                if (error_msg.equals("")){
+                    return ResponseEntity.ok("");
+                }
+                return ResponseEntity.badRequest().body(new GsonBuilder().setPrettyPrinting().create().toJson(new ErrorResponse(false,error_msg)));
+            }
+            case 3 -> {
                 BlockChainV3 blockChainV3 = applicationContext.getBean(BlockChainV3.class);
                 String error_msg = blockChainV3.addBlocks(requestList);
                 if (error_msg.equals("")){

@@ -1,6 +1,7 @@
 package com.unipi.msc.javablockchainapi.Model.V1;
 
 import com.google.gson.GsonBuilder;
+import com.unipi.msc.javablockchainapi.Constants.Constant;
 import com.unipi.msc.javablockchainapi.Constants.ResultMessages;
 import com.unipi.msc.javablockchainapi.Controllers.Request.AddBlockRequest;
 import com.unipi.msc.javablockchainapi.Model.V1.Block;
@@ -19,7 +20,7 @@ import java.util.stream.Collectors;
 @Scope("singleton")
 public class BlockChainV1 {
     private final List<Block> blockChain = new ArrayList<>();
-    private final static int prefix = 3;
+    private final static int prefix = Constant.HASH_PREFIX;
 
     public List<Block> getBlockChain() {
         if (blockChain.isEmpty()) {
@@ -59,9 +60,7 @@ public class BlockChainV1 {
     public String addBlock(Integer productId, double price, Long timestamp) {
         DatabaseConfig.createDB();
         Integer sql_error_code = DatabaseConfig.addPrice(productId, price, timestamp);
-        if (sql_error_code != 0) {
-            return "Product id not found";
-        }
+        if (sql_error_code != 0) return ResultMessages.PRODUCT_NOT_FOUND;
         try {
             if (blockChain.size() == 0) {
                 buildBlockChain();
@@ -88,7 +87,7 @@ public class BlockChainV1 {
         }
         Integer sql_error_code = DatabaseConfig.addPrices(productPriceList);
         if (sql_error_code != 0) {
-            return "Product id not found";
+            return ResultMessages.PRODUCT_NOT_FOUND;
         }
         try {
             if (blockChain.size() == 0) {
