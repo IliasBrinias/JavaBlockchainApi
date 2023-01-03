@@ -4,11 +4,10 @@ import com.google.gson.GsonBuilder;
 import com.unipi.msc.javablockchainapi.Constants.Constant;
 import com.unipi.msc.javablockchainapi.Constants.ResultMessages;
 import com.unipi.msc.javablockchainapi.Controllers.Request.AddBlockRequest;
-import com.unipi.msc.javablockchainapi.Model.V1.Block;
+import com.unipi.msc.javablockchainapi.Model.V1.BlockV1;
 import com.unipi.msc.javablockchainapi.Model.DatabaseConfig;
 import com.unipi.msc.javablockchainapi.Model.Product;
 import com.unipi.msc.javablockchainapi.Model.ProductPrice;
-import com.unipi.msc.javablockchainapi.Model.V3.BlockV3;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.springframework.context.annotation.Scope;
@@ -44,7 +43,7 @@ public class BlockChainV3 {
     private void addBlockToChain(ProductPrice p) throws Exception {
         BlockV3 block;
         if (blockChain.isEmpty()) {
-            block = new BlockV3(Block.GENESIS_HASH,
+            block = new BlockV3(BlockV1.GENESIS_HASH,
                     p,
                     new Date().getTime());
         } else {
@@ -52,9 +51,9 @@ public class BlockChainV3 {
                     p,
                     new Date().getTime());
         }
-        block.mineBlock(prefix);
+        block.mineBlock();
         blockChain.add(block);
-        if (block.getPreviousHash().equals(Block.GENESIS_HASH)) return;
+        if (block.getPreviousHash().equals(BlockV1.GENESIS_HASH)) return;
         isChainValid();
     }
 

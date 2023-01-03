@@ -1,6 +1,7 @@
 package com.unipi.msc.javablockchainapi.Controllers.BlockChain;
 
 import com.google.gson.GsonBuilder;
+import com.unipi.msc.javablockchainapi.Constants.ResultMessages;
 import com.unipi.msc.javablockchainapi.Model.V2.BlockChainV2;
 import com.unipi.msc.javablockchainapi.Model.V3.BlockChainV3;
 import com.unipi.msc.javablockchainapi.Controllers.Request.AddBlockRequest;
@@ -34,7 +35,7 @@ public class BlockChainController {
                 return ResponseEntity.ok(new GsonBuilder().setPrettyPrinting().create().toJson(blockChainV3.getBlockChain()));
             }
         }
-        return ResponseEntity.badRequest().body(new GsonBuilder().setPrettyPrinting().create().toJson(new ErrorResponse(false,"Wrong Version")));
+        return ResponseEntity.badRequest().body(new GsonBuilder().setPrettyPrinting().create().toJson(new ErrorResponse(false, ResultMessages.WRONG_VERSION)));
     }
     @PostMapping("{version}")
     public ResponseEntity<String> addBlock(@PathVariable Integer version, @RequestBody AddBlockRequest request){
@@ -64,7 +65,7 @@ public class BlockChainController {
                 return ResponseEntity.badRequest().body(new GsonBuilder().setPrettyPrinting().create().toJson(new ErrorResponse(false,error_msg)));
             }
         }
-        return ResponseEntity.badRequest().body(new GsonBuilder().setPrettyPrinting().create().toJson(new ErrorResponse(false,"Wrong Version")));
+        return ResponseEntity.badRequest().body(new GsonBuilder().setPrettyPrinting().create().toJson(new ErrorResponse(false,ResultMessages.WRONG_VERSION)));
     }
     @PostMapping("{version}/multiple")
     public ResponseEntity<String> addAllBlock(@PathVariable Integer version, @RequestBody List<AddBlockRequest> requestList){
@@ -94,6 +95,6 @@ public class BlockChainController {
                 return ResponseEntity.badRequest().body(new GsonBuilder().setPrettyPrinting().create().toJson(new ErrorResponse(false,error_msg)));
             }
         }
-        return ResponseEntity.badRequest().body(new GsonBuilder().setPrettyPrinting().create().toJson(new ErrorResponse(false,"Wrong Version")));
+        return ResponseEntity.badRequest().body(new GsonBuilder().setPrettyPrinting().create().toJson(new ErrorResponse(false,ResultMessages.WRONG_VERSION)));
     }
 }

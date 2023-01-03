@@ -4,7 +4,6 @@ import com.google.gson.GsonBuilder;
 import com.unipi.msc.javablockchainapi.Constants.Constant;
 import com.unipi.msc.javablockchainapi.Constants.ResultMessages;
 import com.unipi.msc.javablockchainapi.Controllers.Request.AddBlockRequest;
-import com.unipi.msc.javablockchainapi.Model.V1.Block;
 import com.unipi.msc.javablockchainapi.Model.DatabaseConfig;
 import com.unipi.msc.javablockchainapi.Model.Product;
 import com.unipi.msc.javablockchainapi.Model.ProductPrice;
@@ -19,18 +18,17 @@ import java.util.stream.Collectors;
 @Component
 @Scope("singleton")
 public class BlockChainV1 {
-    private final List<Block> blockChain = new ArrayList<>();
-    private final static int prefix = Constant.HASH_PREFIX;
+    private final List<BlockV1> blockV1Chain = new ArrayList<>();
 
-    public List<Block> getBlockChain() {
-        if (blockChain.isEmpty()) {
+    public List<BlockV1> getBlockChain() {
+        if (blockV1Chain.isEmpty()) {
             try {
                 buildBlockChain();
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
         }
-        return blockChain;
+        return blockV1Chain;
     }
 
     private void buildBlockChain() throws Exception {
@@ -41,19 +39,19 @@ public class BlockChainV1 {
     }
 
     private void addBlockToChain(ProductPrice p) throws Exception {
-        Block block;
-        if (blockChain.isEmpty()) {
-            block = new Block(Block.GENESIS_HASH,
+        BlockV1 blockV1;
+        if (blockV1Chain.isEmpty()) {
+            blockV1 = new BlockV1(BlockV1.GENESIS_HASH,
                     p,
                     new Date().getTime());
         } else {
-            block = new Block(blockChain.get(blockChain.size() - 1).getHash(),
+            blockV1 = new BlockV1(blockV1Chain.get(blockV1Chain.size() - 1).getHash(),
                     p,
                     new Date().getTime());
         }
-        block.mineBlock(prefix);
-        blockChain.add(block);
-        if (block.getPreviousHash().equals(Block.GENESIS_HASH)) return;
+        blockV1.mineBlock();
+        blockV1Chain.add(blockV1);
+        if (blockV1.getPreviousHash().equals(BlockV1.GENESIS_HASH)) return;
         isChainValid();
     }
 
@@ -62,7 +60,7 @@ public class BlockChainV1 {
         Integer sql_error_code = DatabaseConfig.addPrice(productId, price, timestamp);
         if (sql_error_code != 0) return ResultMessages.PRODUCT_NOT_FOUND;
         try {
-            if (blockChain.size() == 0) {
+            if (blockV1Chain.size() == 0) {
                 buildBlockChain();
             } else {
                 addBlockToChain(DatabaseConfig.getLastData());
@@ -90,7 +88,7 @@ public class BlockChainV1 {
             return ResultMessages.PRODUCT_NOT_FOUND;
         }
         try {
-            if (blockChain.size() == 0) {
+            if (blockV1Chain.size() == 0) {
                 buildBlockChain();
             } else {
                 productPriceList = DatabaseConfig.getLastData(requestList.size());
@@ -104,17 +102,16 @@ public class BlockChainV1 {
         return "";
     }
     private void isChainValid() throws Exception {
-        Block currentBlock;
-        Block previousBlock;
-        String hashTarget = new String(new char[prefix]).replace('\0','0');
-        for (int i=1;i<blockChain.size();i++){
-            currentBlock = blockChain.get(i);
-            previousBlock = blockChain.get(i-1);
-            if (!currentBlock.getHash().equals(currentBlock.calculateBlockHash()))
+        BlockV1 currentBlockV1;
+        BlockV1 previousBlockV1;
+        for (int i = 1; i< blockV1Chain.size(); i++){
+            currentBlockV1 = blockV1Chain.get(i);
+            previousBlockV1 = blockV1Chain.get(i-1);
+            if (!currentBlockV1.getHash().equals(currentBlockV1.calculateBlockHash()))
                 throw new Exception(ResultMessages.CHAIN_INVALID_ERROR);
-            if (!previousBlock.getHash().equals(currentBlock.getPreviousHash()))
+            if (!previousBlockV1.getHash().equals(currentBlockV1.getPreviousHash()))
                 throw new Exception(ResultMessages.CHAIN_INVALID_ERROR);
-            if (!currentBlock.getHash().substring(0,prefix).equals(hashTarget))
+            if (!currentBlockV1.getHash().substring(0,Constant.HASH_PREFIX).equals(Constant.HASH_TARGET))
                 throw new Exception(ResultMessages.CHAIN_INVALID_ERROR);
         }
     }
@@ -134,7 +131,7 @@ public class BlockChainV1 {
     public String countPriceChange(List<Product> productList) {
         Map<Integer,Integer> product_price_change = new HashMap<>();
 //        count the product price change
-        for (Block b:getBlockChain()){
+        for (BlockV1 b:getBlockChain()){
             product_price_change.merge(b.getData().getProduct().getId(), 1, Integer::sum);
         }
 

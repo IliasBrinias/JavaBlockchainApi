@@ -3,15 +3,19 @@ package com.unipi.msc.javablockchainapi.Model.V2;
 import com.unipi.msc.javablockchainapi.Constants.Constant;
 import com.unipi.msc.javablockchainapi.Model.ProductPrice;
 import com.unipi.msc.javablockchainapi.interfaces.NonceListener;
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.TimeUnit;
 
 import static com.unipi.msc.javablockchainapi.Constants.Constant.NUMBER_OF_THREADS;
 
@@ -19,9 +23,11 @@ import static com.unipi.msc.javablockchainapi.Constants.Constant.NUMBER_OF_THREA
 public class BlockV2 {
     private String hash;
     private final String previousHash;
-    @Setter private ProductPrice data;
+    private final ProductPrice data;
     private final long timeStamp;
     private int nonce;
+    @Getter(AccessLevel.NONE)
+    private volatile boolean isMining = true;
 
     public BlockV2(String previousHash, ProductPrice data, long timeStamp) {
         this.previousHash = previousHash;
@@ -50,16 +56,22 @@ public class BlockV2 {
         if (this.nonce!=0) return;
         this.nonce = nonce;
         this.hash = hash;
+        isMining = false;
     }
 
     public void mineBlock(){
-        ExecutorService executorService = Executors.newFixedThreadPool(NUMBER_OF_THREADS);
         String dataToHash = previousHash + timeStamp + data.toString();
+        ExecutorService executorService = Executors.newFixedThreadPool(NUMBER_OF_THREADS);
+        List<Miner> minerList = new ArrayList<>();
+        int step = Integer.MAX_VALUE / (NUMBER_OF_THREADS ^ 2);
         for (int i = 0; i<(NUMBER_OF_THREADS^2); i++){
-            executorService.execute(new Miner(i, dataToHash, hash, Integer.MAX_VALUE / NUMBER_OF_THREADS ^ 2, (n,h)->{
+            minerList.add(new Miner(i, dataToHash, hash, step, (n,h)->{
                 saveNonce(n,h);
                 executorService.shutdown();
+                for (Miner m:minerList) m.stop();
             }));
         }
+        for (Miner m : minerList) executorService.execute(m);
+        while (isMining) Thread.onSpinWait();
     }
 }

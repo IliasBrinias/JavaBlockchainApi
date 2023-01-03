@@ -4,7 +4,7 @@ import com.google.gson.GsonBuilder;
 import com.unipi.msc.javablockchainapi.Constants.Constant;
 import com.unipi.msc.javablockchainapi.Constants.ResultMessages;
 import com.unipi.msc.javablockchainapi.Controllers.Request.AddBlockRequest;
-import com.unipi.msc.javablockchainapi.Model.V1.Block;
+import com.unipi.msc.javablockchainapi.Model.V1.BlockV1;
 import com.unipi.msc.javablockchainapi.Model.DatabaseConfig;
 import com.unipi.msc.javablockchainapi.Model.Product;
 import com.unipi.msc.javablockchainapi.Model.ProductPrice;
@@ -43,7 +43,7 @@ public class BlockChainV2 {
     private void addBlockToChain(ProductPrice p) throws Exception {
         BlockV2 block;
         if (blockChain.isEmpty()) {
-            block = new BlockV2(Block.GENESIS_HASH,
+            block = new BlockV2(BlockV1.GENESIS_HASH,
                     p,
                     new Date().getTime());
         } else {

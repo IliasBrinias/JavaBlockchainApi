@@ -14,6 +14,7 @@ public class Miner implements Runnable{
     int currentNonce;
     int maxNonce;
     String data;
+    private boolean stopMining = false;
 
     public Miner(Integer runnable_id, String data, String thread_hash, int step, NonceListener nonceListener) {
         this.runnable_id = runnable_id;
@@ -42,12 +43,16 @@ public class Miner implements Runnable{
 
     @Override
     public void run() {
-
         while (!thread_hash.substring(0,Constant.HASH_PREFIX).equals(Constant.HASH_TARGET)){
             currentNonce++;
             if (currentNonce >=  maxNonce) return;
+            if (stopMining) return;
             thread_hash = calculateBlockHash(currentNonce);
         }
         nonceListener.OnNonceFound(currentNonce,thread_hash);
+    }
+
+    public void stop() {
+        stopMining = true;
     }
 }

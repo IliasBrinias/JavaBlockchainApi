@@ -54,8 +54,7 @@ public class BlockV3 {
         this.nonce = nonce;
         this.hash = hash;
     }
-    public void mineBlock(int prefix){
-        String prefixString = new String(new char[prefix]).replace('\0','0');
+    public void mineBlock(){
         int max_int = Integer.MAX_VALUE,
             numberOfThreads = Constant.NUMBER_OF_THREADS,
             step = max_int/ numberOfThreads;
@@ -71,10 +70,10 @@ public class BlockV3 {
 
                 final int maxNonce = (thread_id + 1) *step;
 
-                while (!thread_hash.substring(0,prefix).equals(prefixString)){
+                while (!thread_hash.substring(0,Constant.HASH_PREFIX).equals(Constant.HASH_TARGET)){
                     currentNonce++;
                     if (currentNonce >=  maxNonce) return;
-                    if (hash.substring(0,prefix).equals(prefixString)) return;
+                    if (hash.substring(0,Constant.HASH_PREFIX).equals(Constant.HASH_TARGET)) return;
                     thread_hash = calculateBlockHash(currentNonce);
                 }
 
