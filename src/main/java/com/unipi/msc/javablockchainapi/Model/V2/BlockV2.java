@@ -63,8 +63,9 @@ public class BlockV2 {
         String dataToHash = previousHash + timeStamp + data.toString();
         ExecutorService executorService = Executors.newFixedThreadPool(NUMBER_OF_THREADS);
         List<Miner> minerList = new ArrayList<>();
-        int step = Integer.MAX_VALUE / (NUMBER_OF_THREADS ^ 2);
-        for (int i = 0; i<(NUMBER_OF_THREADS^2); i++){
+        int step = Integer.MAX_VALUE / (2*NUMBER_OF_THREADS );
+        // create more task than the threads
+        for (int i = 0; i<(2*NUMBER_OF_THREADS); i++){
             minerList.add(new Miner(i, dataToHash, hash, step, (n,h)->{
                 saveNonce(n,h);
                 executorService.shutdown();

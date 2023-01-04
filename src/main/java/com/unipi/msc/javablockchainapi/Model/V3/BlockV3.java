@@ -27,9 +27,12 @@ public class BlockV3 {
         this.previousHash = previousHash;
         this.data = data;
         this.timeStamp = timeStamp;
-        this.hash = calculateBlockHash(this.nonce);
+        this.hash = calculateBlockHash();
     }
-    public String calculateBlockHash(int nonce){
+    public String calculateBlockHash(){
+        return calculateBlockHashWithNonce(nonce);
+    }
+    public String calculateBlockHashWithNonce(int nonce){
         String dataToHash = previousHash +
                 timeStamp +
                 data.toString() +
@@ -74,7 +77,7 @@ public class BlockV3 {
                     currentNonce++;
                     if (currentNonce >=  maxNonce) return;
                     if (hash.substring(0,Constant.HASH_PREFIX).equals(Constant.HASH_TARGET)) return;
-                    thread_hash = calculateBlockHash(currentNonce);
+                    thread_hash = calculateBlockHashWithNonce(currentNonce);
                 }
 
                 saveNonce(currentNonce,thread_hash);

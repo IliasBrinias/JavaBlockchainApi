@@ -13,12 +13,10 @@ import java.io.Serializable;
 @Getter
 @Setter
 public class ProductPrice implements Serializable {
-
     private int id;
     private Product product;
     private Double price;
     private Long timestamp;
-
     @Override
     public String toString() {
         return "ProductPrice{" +

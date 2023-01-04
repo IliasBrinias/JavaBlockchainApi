@@ -10,7 +10,6 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 @Getter
 public class BlockV1 {
-    public static String GENESIS_HASH = "0";
     private String hash;
     private final String previousHash;
     @Setter private ProductPrice data;
@@ -39,7 +38,6 @@ public class BlockV1 {
         }
         return builder.toString();
     }
-
     public void mineBlock(){
         while (!hash.substring(0, Constant.HASH_PREFIX).equals(Constant.HASH_TARGET)){
             nonce++;

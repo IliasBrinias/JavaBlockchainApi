@@ -17,8 +17,9 @@ public class BenchMark {
     public static void main(String[] args) {
         try   {
             new Runner(new OptionsBuilder()
-                    .include(BenchMark.class.getSimpleName())
-                    .forks(1).build()
+                .include(BenchMark.class.getSimpleName())
+                .forks(1)
+                .build()
             ).run();
         } catch (RunnerException e) {
             throw new RuntimeException(e);

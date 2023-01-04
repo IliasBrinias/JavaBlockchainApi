@@ -19,7 +19,7 @@ import java.util.stream.Collectors;
 @Scope("singleton")
 public class BlockChainV1 {
     private final List<BlockV1> blockV1Chain = new ArrayList<>();
-
+    private boolean isMining = false;
     public List<BlockV1> getBlockChain() {
         if (blockV1Chain.isEmpty()) {
             try {
@@ -32,16 +32,18 @@ public class BlockChainV1 {
     }
 
     private void buildBlockChain() throws Exception {
+        isMining = true;
         DatabaseConfig.createDB();
         for (ProductPrice p : DatabaseConfig.getData()) {
             addBlockToChain(p);
         }
+        isMining = false;
     }
 
-    private void addBlockToChain(ProductPrice p) throws Exception {
+    private synchronized void addBlockToChain(ProductPrice p) throws Exception {
         BlockV1 blockV1;
         if (blockV1Chain.isEmpty()) {
-            blockV1 = new BlockV1(BlockV1.GENESIS_HASH,
+            blockV1 = new BlockV1(Constant.GENESIS_HASH,
                     p,
                     new Date().getTime());
         } else {
@@ -51,11 +53,13 @@ public class BlockChainV1 {
         }
         blockV1.mineBlock();
         blockV1Chain.add(blockV1);
-        if (blockV1.getPreviousHash().equals(BlockV1.GENESIS_HASH)) return;
+        if (blockV1.getPreviousHash().equals(Constant.GENESIS_HASH)) return;
         isChainValid();
     }
 
     public String addBlock(Integer productId, double price, Long timestamp) {
+        if (isMining) return ResultMessages.BLOCKCHAIN_IS_ACTIVE;
+        isMining = true;
         DatabaseConfig.createDB();
         Integer sql_error_code = DatabaseConfig.addPrice(productId, price, timestamp);
         if (sql_error_code != 0) return ResultMessages.PRODUCT_NOT_FOUND;
@@ -68,10 +72,12 @@ public class BlockChainV1 {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
-
+        isMining = false;
         return "";
     }
     public String addBlocks(List<AddBlockRequest> requestList) {
+        if (isMining) return ResultMessages.BLOCKCHAIN_IS_ACTIVE;
+        isMining = true;
         DatabaseConfig.createDB();
         List<ProductPrice> productPriceList = new ArrayList<>();
         for (AddBlockRequest request : requestList) {
@@ -99,6 +105,7 @@ public class BlockChainV1 {
         } catch (Exception e) {
             e.printStackTrace();
         }
+        isMining = false;
         return "";
     }
     private void isChainValid() throws Exception {
@@ -107,6 +114,7 @@ public class BlockChainV1 {
         for (int i = 1; i< blockV1Chain.size(); i++){
             currentBlockV1 = blockV1Chain.get(i);
             previousBlockV1 = blockV1Chain.get(i-1);
+            // check if the block hash, the nonce and the previous hash are correct
             if (!currentBlockV1.getHash().equals(currentBlockV1.calculateBlockHash()))
                 throw new Exception(ResultMessages.CHAIN_INVALID_ERROR);
             if (!previousBlockV1.getHash().equals(currentBlockV1.getPreviousHash()))
@@ -118,11 +126,13 @@ public class BlockChainV1 {
 
     public List<ProductPrice> getProduct(int id) {
         List<ProductPrice> productPriceList = new ArrayList<>();
+        // collect data from the collects with stream api
         getBlockChain().stream()
                 .filter(block -> block.getData().getProduct().getId() == id)
                 .forEach(block -> productPriceList.add(block.getData()));
         if (productPriceList.isEmpty()) return null;
 
+        // sort the data with stream api
         return productPriceList.stream()
                 .sorted((p1,p2)->Long.compare(p2.getTimestamp(), p1.getTimestamp()))
                 .collect(Collectors.toList());

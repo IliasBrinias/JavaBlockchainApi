@@ -6,3 +6,7 @@ This is my M.Sc. Exercise and combines multithreading with BlockChain Technology
 * Spring Boot (API)
 * Design Patterns (Singleton)
 * Multithreading (reduce mining time)
+* JMH Benchmarking (for each version)
+
+### Benchmark results
+![img.png](img.png)

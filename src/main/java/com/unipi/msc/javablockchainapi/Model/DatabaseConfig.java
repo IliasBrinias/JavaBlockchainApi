@@ -1,5 +1,6 @@
 package com.unipi.msc.javablockchainapi.Model;
 
+import com.unipi.msc.javablockchainapi.Constants.Constant;
 import com.unipi.msc.javablockchainapi.Controllers.Request.AddBlockRequest;
 import com.unipi.msc.javablockchainapi.Controllers.Request.AddProductRequest;
 import org.sqlite.SQLiteConfig;
@@ -109,7 +110,7 @@ public class DatabaseConfig {
             stmt.execute(productPrice_table);
             conn.close();
         } catch (SQLException | ClassNotFoundException e) {
-            System.out.println(e.getMessage());
+            e.printStackTrace();
         }
     }
 
@@ -129,7 +130,7 @@ public class DatabaseConfig {
             stmt.execute(insert_product);
             conn.close();
         } catch (SQLException | ClassNotFoundException e) {
-            System.out.println(e.getMessage());
+            e.printStackTrace();
         }
     }
     private static void add_prices(){
@@ -146,15 +147,15 @@ public class DatabaseConfig {
                 for (int i=0;i<4;i++){
                     statement.setInt(1, p.getId());
                     statement.setDouble(2, new Date().getTime()+ (long) i * r.nextInt(0,20));
-                    if (p.getProductCategory().equals(ProductCategory.SmartPhones.toString())){
+                    if (p.getProductCategory().equals(Constant.SMARTPHONES)){
                         statement.setDouble(3, BigDecimal.valueOf(r.nextDouble(200,250))
-                                 .setScale(2, RoundingMode.HALF_UP)
-                                 .doubleValue()
+                                                             .setScale(2, RoundingMode.HALF_UP)
+                                                             .doubleValue()
                             );
                     }else {
                         statement.setDouble(3, BigDecimal.valueOf(r.nextDouble(20000,25000))
-                                 .setScale(2, RoundingMode.HALF_UP)
-                                 .doubleValue()
+                                                             .setScale(2, RoundingMode.HALF_UP)
+                                                             .doubleValue()
                             );
                     }
                     statement.addBatch();
