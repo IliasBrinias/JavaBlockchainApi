@@ -26,8 +26,6 @@ public class BlockV2 {
     private final ProductPrice data;
     private final long timeStamp;
     private int nonce;
-    @Getter(AccessLevel.NONE)
-    private volatile boolean isMining = true;
 
     public BlockV2(String previousHash, ProductPrice data, long timeStamp) {
         this.previousHash = previousHash;
@@ -51,6 +49,8 @@ public class BlockV2 {
         }
         return builder.toString();
     }
+    @Getter(AccessLevel.NONE)
+    private volatile boolean isMining = true;
     private synchronized void saveNonce(int nonce, String hash){
         // check if a thead called the method earlier
         if (this.nonce!=0) return;
@@ -58,12 +58,11 @@ public class BlockV2 {
         this.hash = hash;
         isMining = false;
     }
-
     public void mineBlock(){
         String dataToHash = previousHash + timeStamp + data.toString();
         ExecutorService executorService = Executors.newFixedThreadPool(NUMBER_OF_THREADS);
         List<Miner> minerList = new ArrayList<>();
-        int step = Integer.MAX_VALUE / (2*NUMBER_OF_THREADS );
+        int step = Integer.MAX_VALUE / (2*NUMBER_OF_THREADS);
         // create more task than the threads
         for (int i = 0; i<(2*NUMBER_OF_THREADS); i++){
             minerList.add(new Miner(i, dataToHash, hash, step, (n,h)->{

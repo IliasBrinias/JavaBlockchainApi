@@ -7,6 +7,8 @@ import com.unipi.msc.javablockchainapi.Controllers.Response.ErrorResponse;
 import com.unipi.msc.javablockchainapi.Model.DatabaseConfig;
 import com.unipi.msc.javablockchainapi.Model.Product;
 import com.unipi.msc.javablockchainapi.Model.ProductPrice;
+import com.unipi.msc.javablockchainapi.Model.V2.BlockChainV2;
+import com.unipi.msc.javablockchainapi.Model.V3.BlockChainV3;
 import lombok.AllArgsConstructor;
 import org.springframework.context.ApplicationContext;
 import org.springframework.http.ResponseEntity;
@@ -48,25 +50,22 @@ public class ProductController {
         if (DatabaseConfig.getProduct(id) == null){
             return ResponseEntity.badRequest().body(new GsonBuilder().setPrettyPrinting().create().toJson(new ErrorResponse(false,"product id not found")));
         }
-        BlockChainV1 blockChainV1 = applicationContext.getBean(BlockChainV1.class);
-        List<ProductPrice> productPriceList = blockChainV1.getProduct(id);
+        BlockChainV2 blockChainV2 = applicationContext.getBean(BlockChainV2.class);
+        List<ProductPrice> productPriceList = blockChainV2.getProduct(id);
         return ResponseEntity.ok(new GsonBuilder().setPrettyPrinting().create().toJson(productPriceList));
     }
     @GetMapping("/search")
     public ResponseEntity<?> searchProduct(@RequestParam String category,
                                            @RequestParam String name) {
 
-        BlockChainV1 blockChainV1 = applicationContext.getBean(BlockChainV1.class);
+        BlockChainV2 blockChainV2 = applicationContext.getBean(BlockChainV2.class);
         List<Product> productList = DatabaseConfig.searchProducts(category, name);
         if (productList.isEmpty()) {
-            return ResponseEntity.ok(new GsonBuilder()
-                    .setPrettyPrinting()
-                    .create()
-                    .toJson(new ErrorResponse(true,"No Products Found"))
+            return ResponseEntity.ok(new GsonBuilder().setPrettyPrinting().create().toJson(new ErrorResponse(true,"No Products Found"))
             );
         }
 
-        return ResponseEntity.ok(blockChainV1.countPriceChange(productList));
+        return ResponseEntity.ok(blockChainV2.countPriceChange(productList));
     }
 
 }

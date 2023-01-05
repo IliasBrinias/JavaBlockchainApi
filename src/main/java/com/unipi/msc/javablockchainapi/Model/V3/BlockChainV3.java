@@ -17,12 +17,19 @@ public class BlockChainV3 {
     private final List<BlockV3> blockV3Chain = new ArrayList<>();
     private boolean isMining = false;
     public List<BlockV3> getBlockChain() {
-        if (blockV3Chain.isEmpty()) {
-            try {
+        try {
+            if (blockV3Chain.isEmpty()) {
                 buildBlockChain();
-            } catch (Exception e) {
-                throw new RuntimeException(e);
+            }else {
+                int product_price_count = DatabaseConfig.getProductPriceCount();
+                if (blockV3Chain.size()<product_price_count){
+                    for (ProductPrice productPrice :DatabaseConfig.getLastData(product_price_count - blockV3Chain.size())){
+                        addBlockToChain(productPrice);
+                    }
+                }
             }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
         return blockV3Chain;
     }
@@ -53,7 +60,7 @@ public class BlockChainV3 {
         isChainValid();
     }
 
-    public String addBlock(Integer productId, double price, Long timestamp) {
+    public synchronized String addBlock(Integer productId, double price, Long timestamp) {
         if (isMining) return ResultMessages.BLOCKCHAIN_IS_ACTIVE;
         isMining = true;
         DatabaseConfig.createDB();
@@ -71,7 +78,7 @@ public class BlockChainV3 {
         isMining = false;
         return "";
     }
-    public String addBlocks(List<AddBlockRequest> requestList) {
+    public synchronized String addBlocks(List<AddBlockRequest> requestList) {
         if (isMining) return ResultMessages.BLOCKCHAIN_IS_ACTIVE;
         isMining = true;
         DatabaseConfig.createDB();

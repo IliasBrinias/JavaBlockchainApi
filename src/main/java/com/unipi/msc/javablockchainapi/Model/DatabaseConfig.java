@@ -1,7 +1,6 @@
 package com.unipi.msc.javablockchainapi.Model;
 
 import com.unipi.msc.javablockchainapi.Constants.Constant;
-import com.unipi.msc.javablockchainapi.Controllers.Request.AddBlockRequest;
 import com.unipi.msc.javablockchainapi.Controllers.Request.AddProductRequest;
 import org.sqlite.SQLiteConfig;
 
@@ -66,7 +65,7 @@ public class DatabaseConfig {
                         new Product(rs.getInt("id"),rs.getString("name"),rs.getString("description"),rs.getString("category")),
                         rs.getDouble("price"),
                         rs.getLong("date")
-                        )
+                    )
                 );
             }
         } catch (SQLException | ClassNotFoundException e) {
@@ -146,7 +145,7 @@ public class DatabaseConfig {
             for (Product p : productList) {
                 for (int i=0;i<4;i++){
                     statement.setInt(1, p.getId());
-                    statement.setDouble(2, new Date().getTime()+ (long) i * r.nextInt(0,20));
+                    statement.setDouble(2, new Date().getTime()+ i * 10);
                     if (p.getProductCategory().equals(Constant.SMARTPHONES)){
                         statement.setDouble(3, BigDecimal.valueOf(r.nextDouble(200,250))
                                                              .setScale(2, RoundingMode.HALF_UP)
@@ -278,11 +277,12 @@ public class DatabaseConfig {
                 """;
         try{
             Connection conn = getConnection();
+            conn.setAutoCommit(false);
             PreparedStatement statement = conn.prepareStatement(product_price_value);
             for (AddProductRequest request : requestList) {
                 statement.setString(1, request.getName());
                 statement.setString(2, request.getDsc());
-                statement.setString(3, request.getProductCategory());
+                statement.setString(3, request.getCategory());
                 statement.addBatch();
             }
             statement.executeBatch();
@@ -302,7 +302,7 @@ public class DatabaseConfig {
             PreparedStatement statement = conn.prepareStatement(product_price_value);
             statement.setString(1, request.getName());
             statement.setString(2, request.getDsc());
-            statement.setString(3, request.getProductCategory());
+            statement.setString(3, request.getCategory());
             statement.execute();
             conn.close();
         } catch (SQLException | ClassNotFoundException e) {
@@ -311,6 +311,7 @@ public class DatabaseConfig {
     }
 
     public static Product getProduct(int id) {
+        createDB();
         Product product = null;
         String query = "SELECT * FROM product WHERE id = (?);";
         try {
@@ -361,5 +362,24 @@ public class DatabaseConfig {
             throw new RuntimeException(e);
         }
         return productList;
+    }
+
+    public static int getProductPriceCount() {
+        int rows = 0;
+        String query = """
+                    SELECT COUNT(*) AS recordCount FROM product_price
+                    """;
+        try {
+            Connection conn = getConnection();
+            PreparedStatement statement = conn.prepareStatement(query);
+            ResultSet rs = statement.executeQuery();
+            while(rs.next()){
+                rows = rs.getInt("recordCount");
+            }
+            conn.close();
+        } catch (SQLException | ClassNotFoundException e) {
+            throw new RuntimeException(e);
+        }
+        return rows;
     }
 }

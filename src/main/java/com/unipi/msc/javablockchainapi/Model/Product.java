@@ -17,7 +17,6 @@ public class Product implements Serializable {
     private String name;
     private String dsc;
     private String productCategory;
-
     @Override
     public String toString() {
         return "Product{" +

@@ -21,23 +21,28 @@ public class BlockChainV1 {
     private final List<BlockV1> blockV1Chain = new ArrayList<>();
     private boolean isMining = false;
     public List<BlockV1> getBlockChain() {
-        if (blockV1Chain.isEmpty()) {
-            try {
+        try {
+            if (blockV1Chain.isEmpty()) {
                 buildBlockChain();
-            } catch (Exception e) {
-                throw new RuntimeException(e);
+            }else {
+                int product_price_count = DatabaseConfig.getProductPriceCount();
+                if (blockV1Chain.size()<product_price_count){
+                    for (ProductPrice productPrice :DatabaseConfig.getLastData(product_price_count - blockV1Chain.size())){
+                        addBlockToChain(productPrice);
+                    }
+                }
             }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
         return blockV1Chain;
     }
 
     private void buildBlockChain() throws Exception {
-        isMining = true;
         DatabaseConfig.createDB();
         for (ProductPrice p : DatabaseConfig.getData()) {
             addBlockToChain(p);
         }
-        isMining = false;
     }
 
     private synchronized void addBlockToChain(ProductPrice p) throws Exception {
@@ -57,7 +62,7 @@ public class BlockChainV1 {
         isChainValid();
     }
 
-    public String addBlock(Integer productId, double price, Long timestamp) {
+    public synchronized String addBlock(Integer productId, double price, Long timestamp) {
         if (isMining) return ResultMessages.BLOCKCHAIN_IS_ACTIVE;
         isMining = true;
         DatabaseConfig.createDB();
@@ -75,7 +80,7 @@ public class BlockChainV1 {
         isMining = false;
         return "";
     }
-    public String addBlocks(List<AddBlockRequest> requestList) {
+    public synchronized String addBlocks(List<AddBlockRequest> requestList) {
         if (isMining) return ResultMessages.BLOCKCHAIN_IS_ACTIVE;
         isMining = true;
         DatabaseConfig.createDB();
@@ -124,35 +129,4 @@ public class BlockChainV1 {
         }
     }
 
-    public List<ProductPrice> getProduct(int id) {
-        List<ProductPrice> productPriceList = new ArrayList<>();
-        // collect data from the collects with stream api
-        getBlockChain().stream()
-                .filter(block -> block.getData().getProduct().getId() == id)
-                .forEach(block -> productPriceList.add(block.getData()));
-        if (productPriceList.isEmpty()) return null;
-
-        // sort the data with stream api
-        return productPriceList.stream()
-                .sorted((p1,p2)->Long.compare(p2.getTimestamp(), p1.getTimestamp()))
-                .collect(Collectors.toList());
-    }
-
-    public String countPriceChange(List<Product> productList) {
-        Map<Integer,Integer> product_price_change = new HashMap<>();
-//        count the product price change
-        for (BlockV1 b:getBlockChain()){
-            product_price_change.merge(b.getData().getProduct().getId(), 1, Integer::sum);
-        }
-
-        JSONArray jsonArray = new JSONArray(new GsonBuilder().setPrettyPrinting().create().toJson(productList));
-        for (int i=0;i<jsonArray.length();i++) {
-            JSONObject productJSON = jsonArray.getJSONObject(i);
-            Integer product_price_count = product_price_change.get(productJSON.get("id"));
-            if (product_price_count == null) product_price_count = 0;
-            productJSON.put("product_price_change", product_price_count);
-        }
-
-        return jsonArray.toString();
-    }
 }
